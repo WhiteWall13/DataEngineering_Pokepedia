@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres:latest
+    container_name: postgres_pokepedia
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: pokepedia_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./Postgres_SQL/init.sql:/docker-entrypoint-initdb.d/init.sql
+      
+  scrapy:
+    build:
+      context: .
+      dockerfile: ./PokepediaScrapy/Dockerfile
+    image: pokepedia_scrapy
+    container_name: scrapy_pokepedia
+    depends_on:
+      - db
+  
+  flask:
+    image: flask_pokepedia
+    build:
+      context: .
+      dockerfile: ./Flask/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db  
+
+
+volumes:
+  postgres_data:
