@@ -1,5 +1,8 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
-# IDE file
+# IDE files
 .vscode/
+
+# OS files
+.DS_Store
