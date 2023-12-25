@@ -1,4 +1,4 @@
-# DataEngineering Pokemedia
+# DataEngineering Pokepedia
 
 ## Description
 Ce projet utilise Docker Compose pour orchestrer plusieurs conteneurs, notamment pour la base de données PostgreSQL et le scraping avec Python. Le but est de remplir une base de données PostgreSQL avec des données scrapées à l'aide d'un script Python, en utilisant des conteneurs Docker pour gérer les différents services.
