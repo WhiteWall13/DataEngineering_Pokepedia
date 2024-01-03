@@ -28,7 +28,7 @@ def home():
 @app.route("/pokemons")
 def list_pokemons():
     count = Pokemon.query.count()
-    pokemons = Pokemon.query.all()
+    pokemons = Pokemon.query.order_by(Pokemon.numero).all()
     pokemons_html = f"<h1>Liste des Pokémons ({count})</h1>"
     pokemons_html += "<ul>"
     for pokemon in pokemons:

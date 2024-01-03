@@ -15,4 +15,4 @@ COPY ./scrapy.cfg /app/
 WORKDIR /app/PokepediaScrapy
 
 # Run Scrapy and insertion script
-CMD scrapy crawl pokemon && scrapy crawl pokemon_detail && python insert.py
+CMD scrapy crawl pokemon && scrapy crawl pokemon_detail && python insert.py; sleep 600
