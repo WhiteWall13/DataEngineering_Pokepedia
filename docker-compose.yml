@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-
   db:
     image: postgres:latest
     container_name: postgres_pokepedia
@@ -14,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./Postgres_SQL/init.sql:/docker-entrypoint-initdb.d/init.sql
-      
+
   scrapy:
     build:
       context: .
@@ -23,17 +22,42 @@ services:
     container_name: scrapy_pokepedia
     depends_on:
       - db
-  
+
   flask:
-    image: flask_pokepedia
     build:
       context: .
       dockerfile: ./Flask/Dockerfile
     ports:
       - "8080:8080"
     depends_on:
-      - db  
+      - db
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
+    container_name: elasticsearch_pokepedia
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=password  
+      - xpack.security.enabled=true
+    ports:
+      - "9200:9200"
+
+
+  elastic_migrator:
+    build:
+      context: .
+      dockerfile: ./ElasticSearch/Dockerfile
+    container_name: elastic_migrator
+    depends_on:
+      - db
+      - scrapy
+      - elasticsearch
+    environment:
+      - POSTGRES_HOST=db 
+      - POSTGRES_DB=pokepedia_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - ELASTICSEARCH_HOST=elasticsearch
 
 volumes:
   postgres_data:

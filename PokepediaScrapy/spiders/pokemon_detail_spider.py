@@ -25,21 +25,41 @@ class PokemonDetailSpider(scrapy.Spider):
         if image_url:
             pokemon_item["image"] = response.urljoin(image_url)
 
-        stats = {}
-        for stat_row in response.xpath(
-            "//table[contains(@class, 'tableau-overflow')]/tbody/tr"
-        ):
-            stat_name = stat_row.xpath("td[1]/a/text()").get()
-            stat_value = stat_row.xpath("td[2]/text()").get()
+        # stats = {}
+        # for stat_row in response.xpath(
+        #     "//table[contains(@class, 'tableau-overflow')]/tbody/tr"
+        # ):
+        #     stat_name = stat_row.xpath("td[1]/a/text()").get()
+        #     stat_value = stat_row.xpath("td[2]/text()").get()
 
-            if stat_name and stat_value:
-                stat_value_cleaned = stat_value.strip()
-                if stat_value_cleaned.isdigit():
-                    stats[stat_name.strip()] = int(stat_value_cleaned)
-                else:
-                    print(
-                        f"Valeur non numérique pour {stat_name.strip()}: '{stat_value_cleaned}'"
-                    )
+        #     if stat_name and stat_value:
+        #         stat_value_cleaned = stat_value.strip()
+        #         stats[stat_name.strip()] = stat_value_cleaned
+        #         # if stat_value_cleaned.isdigit():
+        #         #     stats[stat_name.strip()] = int(stat_value_cleaned)
+        #         #     # print(
+        #         #     #     f"Stats numériques pour {stat_name.strip()}: '{stat_value_cleaned} :)'"
+        #         #     # )
+        #         # else:
+        #         #     print(
+        #         #         f"Stats non numériques pour {stat_name.strip()}: {stat_value_cleaned} or {stat_value}"
+        #         #     )
+        # pokemon_item["stats"] = stats
+
+        stats = {}
+        # Sélectionner les tableaux qui contiennent "Statistiques indicatives" dans l'en-tête
+        tables = response.xpath(
+            "//th[contains(text(), 'Statistiques indicatives')]/ancestor::table"
+        )
+
+        for table in tables:
+            for stat_row in table.xpath("./tbody/tr"):
+                stat_name = stat_row.xpath("td[1]/a/text()").get()
+                stat_value = stat_row.xpath("td[2]/text()").get()
+
+                if stat_name and stat_value:
+                    stats[stat_name.strip()] = int(stat_value.strip())
+
         pokemon_item["stats"] = stats
 
         evolutions = []

@@ -1,5 +1,5 @@
 CREATE TABLE pokemon (
-    numero VARCHAR(10) PRIMARY KEY,
+    numero INT PRIMARY KEY,
     nom VARCHAR(255) NOT NULL,
     image_mini VARCHAR(255),
     lien VARCHAR(255),
@@ -12,7 +12,7 @@ CREATE TABLE type (
 );
 
 CREATE TABLE pokemon_type (
-    numero VARCHAR(10),
+    numero INT,
     type_id INT,
     FOREIGN KEY (numero) REFERENCES pokemon(numero),
     FOREIGN KEY (type_id) REFERENCES type(type_id),
@@ -20,7 +20,7 @@ CREATE TABLE pokemon_type (
 );
 
 CREATE TABLE statistiques (
-    numero VARCHAR(10),
+    numero INT,
     pv INT,
     attaque INT,
     defense INT,
@@ -33,7 +33,7 @@ CREATE TABLE statistiques (
 );
 
 CREATE TABLE evolution (
-    numero VARCHAR(10),
+    numero INT,
     evolution VARCHAR(255),
     FOREIGN KEY (numero) REFERENCES pokemon(numero),
     PRIMARY KEY (numero, evolution)

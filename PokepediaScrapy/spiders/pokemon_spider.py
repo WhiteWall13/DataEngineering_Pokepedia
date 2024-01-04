@@ -17,6 +17,10 @@ class PokemonSpider(scrapy.Spider):
             numero = row.xpath("td[1]/text()").get()
             if numero and numero.isdigit():
                 item = PokemonItem()
+                try:
+                    numero = int(numero)
+                except ValueError:
+                    print(f"Le numéro {numero} n'est pas un nombre valide.")
                 item["numero"] = numero
                 item["nom"] = row.xpath("td[3]/a/text()").get()
                 # types = row.xpath("td[8]//img/@alt").getall()
