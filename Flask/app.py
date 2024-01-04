@@ -26,6 +26,7 @@ def home():
     """
     return home_html
 
+
 @app.route("/pokemons")
 def list_pokemons():
     # Requête ElasticSearch pour compter le nombre total de Pokémon
@@ -68,7 +69,12 @@ def statistiques():
     counts = [bucket['doc_count'] for bucket in buckets]
 
     # Création de l'histogramme avec Plotly
-    fig = px.bar(x=types, y=counts, labels={'x': 'Type', 'y': 'Nombre'}, title="Nombre de Pokémon par Type")
+    fig = px.bar(
+        x=types,
+        y=counts,
+        labels={"x": "Type", "y": "Nombre"},
+        title="Nombre de Pokémon par Type",
+    )
 
     # Rendu de l'histogramme en HTML
     graph_html = pio.to_html(fig, full_html=False)
