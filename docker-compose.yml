@@ -42,22 +42,5 @@ services:
     ports:
       - "9200:9200"
 
-
-  elastic_migrator:
-    build:
-      context: .
-      dockerfile: ./ElasticSearch/Dockerfile
-    container_name: elastic_migrator
-    depends_on:
-      - db
-      - scrapy
-      - elasticsearch
-    environment:
-      - POSTGRES_HOST=db 
-      - POSTGRES_DB=pokepedia_db
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - ELASTICSEARCH_HOST=elasticsearch
-
 volumes:
   postgres_data:
