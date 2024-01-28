@@ -21,4 +21,4 @@ COPY ./ElasticSearch/app_elastic.py /app/ElasticSearch
 WORKDIR /app/PokepediaScrapy
 
 # Run Scrapy and insertion script
-CMD scrapy crawl pokemon && scrapy crawl pokemon_detail && python insert.py && python /app/ElasticSearch/app_elastic.py
+CMD scrapy crawl pokemon && scrapy crawl pokemon_detail && python insert.py && python /app/ElasticSearch/app_elastic.py; sleep 300

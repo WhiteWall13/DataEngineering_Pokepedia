@@ -38,3 +38,21 @@ CREATE TABLE evolution (
     FOREIGN KEY (numero) REFERENCES pokemon(numero),
     PRIMARY KEY (numero, evolution)
 );
+
+CREATE TABLE sensibilite (
+    sensibilite_id SERIAL PRIMARY KEY,
+    valeur FLOAT NOT NULL UNIQUE
+);
+
+CREATE TABLE pokemon_sensibilite (
+    numero INT,
+    type_id INT,
+    sensibilite_id INT,
+    FOREIGN KEY (numero) REFERENCES pokemon(numero),
+    FOREIGN KEY (type_id) REFERENCES type(type_id),
+    FOREIGN KEY (sensibilite_id) REFERENCES sensibilite(sensibilite_id),
+    PRIMARY KEY (numero, type_id)
+);
+
+
+

@@ -20,6 +20,11 @@ def pichu_stats():
         "Vitesse": "60",
     }
 
+def pichu():
+    return{
+        "Plante": 2.0
+    }
+
 
 def validate_data(json_data):
     """Validates the JSON data to ensure it is in the expected format"""
@@ -36,6 +41,7 @@ def validate_data(json_data):
                 "image",
                 "stats",
                 "evolutions",
+                "sensibilities"
             ]
         ):
             valid = False
@@ -71,6 +77,14 @@ def insert_pokemon_data(json_data, db_params):
         insert_stats = sql.SQL(
             "INSERT INTO statistiques (numero, pv, attaque, defense, attaque_speciale, defense_speciale, vitesse, special) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING;"
         )
+        insert_sensibilite = sql.SQL(
+            "INSERT INTO sensibilite (valeur) VALUES (%s) ON CONFLICT (valeur) DO NOTHING RETURNING sensibilite_id;"
+        )
+        insert_pokemon_sensibilite = sql.SQL(
+            "INSERT INTO pokemon_sensibilite (numero, type_id, sensibilite_id) "
+            "VALUES (%s, (SELECT type_id FROM type WHERE type_nom = %s), %s) ON CONFLICT DO NOTHING;"
+        )
+
 
         # Iterate over each Pokemon and insert data into the database
         for pokemon in json_data:
@@ -81,7 +95,7 @@ def insert_pokemon_data(json_data, db_params):
                     pokemon["nom"],
                     pokemon["image_mini"],
                     pokemon["lien"],
-                    pokemon["image"],
+                    pokemon["image"]
                 ),
             )
 
@@ -90,6 +104,7 @@ def insert_pokemon_data(json_data, db_params):
                 cur.execute(insert_pokemon_type, (pokemon["numero"], type))
 
             if pokemon["numero"] == 172:
+                pokemon["sensibilities"] = pichu()
                 pokemon["stats"] = pichu_stats()
 
             if pokemon["stats"] == {}:
@@ -115,6 +130,36 @@ def insert_pokemon_data(json_data, db_params):
                     stats.get("Spécial"),
                 ),
             )
+
+            if 'sensibilities' in pokemon:
+                for type_sensibility, value in pokemon['sensibilities'].items():
+                    # Enlever '(type)' pour correspondre aux noms dans la table 'type'
+                    type_name = type_sensibility.replace(" (type)", "")
+                    
+                    # Vérifie si le type existe déjà et obtient son id, sinon l'insère
+                    cur.execute("SELECT type_id FROM type WHERE type_nom = %s;", (type_name,))
+                    type_id_result = cur.fetchone()
+                    if not type_id_result:
+                        cur.execute("INSERT INTO type (type_nom) VALUES (%s) RETURNING type_id;", (type_name,))
+                        type_id = cur.fetchone()[0]
+                    else:
+                        type_id = type_id_result[0]
+                    
+                    # Vérifie si la sensibilité existe déjà et obtient son id, sinon l'insère
+                    cur.execute("SELECT sensibilite_id FROM sensibilite WHERE valeur = %s;", (value,))
+                    sensibilite_id_result = cur.fetchone()
+                    if not sensibilite_id_result:
+                        cur.execute("INSERT INTO sensibilite (valeur) VALUES (%s) RETURNING sensibilite_id;", (value,))
+                        sensibilite_id = cur.fetchone()[0]
+                    else:
+                        sensibilite_id = sensibilite_id_result[0]
+                    
+                    # Insérer la liaison entre pokemon, type et sensibilité
+                    cur.execute(
+                        "INSERT INTO pokemon_sensibilite (numero, type_id, sensibilite_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING;",
+                        (pokemon["numero"], type_id, sensibilite_id)
+                    )
+            
 
         logging.info("Data insertion completed successfully.")
 

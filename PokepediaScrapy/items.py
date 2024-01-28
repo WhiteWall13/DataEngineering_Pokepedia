@@ -15,3 +15,4 @@ class PokemonItem(scrapy.Item):
     image = scrapy.Field()
     stats = scrapy.Field()
     evolutions = scrapy.Field()
+    sensibilities = scrapy.Field()
