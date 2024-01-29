@@ -22,13 +22,29 @@ def pichu_stats():
 
 def pichu():
     return{
-        "Plante": 2.0
+        "Normal": 1,
+        "Plante": 2,
+        "Feu": 1,
+        "Eau": 1,
+        "Électrik": 1,
+        "Glace": 1,
+        "Combat": 1,
+        "Poison": 1,
+        "Sol": 2,
+        "Vol": 0.5,
+        "Psy": 1,
+        "Insecte": 1,
+        "Roche": 1,
+        "Spectre": 1,
+        "Dragon": 1,
+        "Ténèbres": 1,
+        "Acier": 0.5,
+        "Fée": 1
     }
 
 
 def validate_data(json_data):
     """Validates the JSON data to ensure it is in the expected format"""
-    valid = True
     for entry in json_data:
         if not all(
             key in entry
@@ -44,9 +60,10 @@ def validate_data(json_data):
                 "sensibilities"
             ]
         ):
-            valid = False
-            break
-    return valid
+            logging.error(f"Invalid JSON data format for entry: {entry}")
+            return False
+    return True
+
 
 
 def insert_pokemon_data(json_data, db_params):
@@ -132,10 +149,7 @@ def insert_pokemon_data(json_data, db_params):
             )
 
             if 'sensibilities' in pokemon:
-                for type_sensibility, value in pokemon['sensibilities'].items():
-                    # Enlever '(type)' pour correspondre aux noms dans la table 'type'
-                    type_name = type_sensibility.replace(" (type)", "")
-                    
+                for type_name, value in pokemon['sensibilities'].items():
                     # Vérifie si le type existe déjà et obtient son id, sinon l'insère
                     cur.execute("SELECT type_id FROM type WHERE type_nom = %s;", (type_name,))
                     type_id_result = cur.fetchone()
@@ -159,6 +173,7 @@ def insert_pokemon_data(json_data, db_params):
                         "INSERT INTO pokemon_sensibilite (numero, type_id, sensibilite_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING;",
                         (pokemon["numero"], type_id, sensibilite_id)
                     )
+
             
 
         logging.info("Data insertion completed successfully.")

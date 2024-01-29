@@ -25,27 +25,6 @@ class PokemonDetailSpider(scrapy.Spider):
         if image_url:
             pokemon_item["image"] = response.urljoin(image_url)
 
-        # stats = {}
-        # for stat_row in response.xpath(
-        #     "//table[contains(@class, 'tableau-overflow')]/tbody/tr"
-        # ):
-        #     stat_name = stat_row.xpath("td[1]/a/text()").get()
-        #     stat_value = stat_row.xpath("td[2]/text()").get()
-
-        #     if stat_name and stat_value:
-        #         stat_value_cleaned = stat_value.strip()
-        #         stats[stat_name.strip()] = stat_value_cleaned
-        #         # if stat_value_cleaned.isdigit():
-        #         #     stats[stat_name.strip()] = int(stat_value_cleaned)
-        #         #     # print(
-        #         #     #     f"Stats numériques pour {stat_name.strip()}: '{stat_value_cleaned} :)'"
-        #         #     # )
-        #         # else:
-        #         #     print(
-        #         #         f"Stats non numériques pour {stat_name.strip()}: {stat_value_cleaned} or {stat_value}"
-        #         #     )
-        # pokemon_item["stats"] = stats
-
         stats = {}
         # Sélectionner les tableaux qui contiennent "Statistiques indicatives" dans l'en-tête
         tables = response.xpath(
@@ -62,29 +41,35 @@ class PokemonDetailSpider(scrapy.Spider):
 
         pokemon_item["stats"] = stats
 
-        # Sensibilités 
+        # Sensibilités
 
-         # Extraction des sensibilités
+        # Extraction des sensibilités
+        # ... (autres parties de votre code)
+
+        # Sensibilités
         sensibilities = {}
+
         # Sélectionnez le tableau des sensibilités
         sensibilities_table = response.xpath('//table[contains(@class, "sensibilite")]')
 
         # Parcourez chaque type (colonne du tableau) et extrayez le type et la sensibilité correspondante
         for sensibility_cell in sensibilities_table.xpath('.//tr[@class="ligne-efficacités"]/td'):
-            # Extraction du nom du type (ex: "Normal", "Feu", etc.)
-            type_name = sensibility_cell.xpath('.//a/@title').get()
+            # Extraction du nom du type sans "(type)"
+            type_name = sensibility_cell.xpath('.//a/@title').get().replace(" (type)", "")
 
             # Extraction de la sensibilité (ex: "× ½", "× 2", etc.)
             # Le texte de la sensibilité est dans une <div> directement après l'image du type
             sensibility_value_raw = sensibility_cell.xpath('.//div/text()').get()
-            if sensibility_value_raw:
+            
+            # Gérer les cas où la div de sensibilité est vide (sensibilité standard de 1)
+            if not sensibility_value_raw:
+                sensibilities[type_name.strip()] = 1.0
+            else:
+                # Nettoyer la valeur brute
                 sensibility_value_raw = sensibility_value_raw.strip()  # Enlever les espaces blancs autour de la valeur
-                
-                # On ignore si le pokemon n'a pas de sensibilité
-                if sensibility_value_raw == '':
-                    continue
 
                 # Convertir la valeur de sensibilité textuelle en nombre flottant
+                sensibility_value = None
                 if sensibility_value_raw == '× ¼':
                     sensibility_value = 0.25
                 elif sensibility_value_raw == '× ½':
@@ -95,17 +80,12 @@ class PokemonDetailSpider(scrapy.Spider):
                     sensibility_value = 4.0
                 elif sensibility_value_raw == '× 0': 
                     sensibility_value = 0.0
-                else:
-                    print(f"La valeur de sensibilité '{sensibility_value_raw}' n'est pas reconnue.")
-                    sensibility_value = None
-                
+
+                # Enregistrer la valeur de sensibilité
                 if sensibility_value is not None:
                     sensibilities[type_name.strip()] = sensibility_value
-                else:
-                    print(f"La valeur de sensibilité {sensibility_value_raw} n'est pas un nombre valide.")
 
         pokemon_item["sensibilities"] = sensibilities
-
 
         # Evolutions 
 
