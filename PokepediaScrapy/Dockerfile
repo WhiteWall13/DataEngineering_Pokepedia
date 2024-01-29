@@ -22,3 +22,5 @@ WORKDIR /app/PokepediaScrapy
 
 # Run Scrapy and insertion script
 CMD scrapy crawl pokemon && scrapy crawl pokemon_detail && python insert.py && python /app/ElasticSearch/app_elastic.py; sleep 300
+
+# TODO : remove sleep 300 at the end
