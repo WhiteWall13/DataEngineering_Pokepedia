@@ -64,15 +64,14 @@ Voici un schéma de l'architecture du projet :
 graph LR
     A[Pokepedia] -->|Scraping via Scrapy| B[JSON]
     B -->|Insertion via insert.py| C[PostgreSQL DB]
-    C -->|Initialisation via init.sql| C
     C -->|Alimentation| D[ElasticSearch]
     D -->|Visualisation| E[Flask App sur localhost:8080]
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#fcf,stroke:#333,stroke-width:2px
-    style C fill:#cff,stroke:#333,stroke-width:2px
-    style D fill:#cfc,stroke:#333,stroke-width:2px
-    style E fill:#ccf,stroke:#333,stroke-width:2px
+    style A fill:#f99,stroke:#333,stroke-width:2px
+    style B fill:#f99,stroke:#333,stroke-width:2px
+    style C fill:#f99,stroke:#333,stroke-width:2px
+    style D fill:#f99,stroke:#333,stroke-width:2px
+    style E fill:#f99,stroke:#333,stroke-width:2px
 ```
 
 ### Choix techniques 
