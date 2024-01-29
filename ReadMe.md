@@ -60,6 +60,7 @@ Le projet utilise Docker Compose pour orchestrer les conteneurs. Voici les servi
 Chaque conteneur est configuré dans le fichier `docker-compose.yml`, et les Dockerfiles correspondants sont utilisés pour définir les environnements de chaque service. Cette architecture modulaire permet une gestion efficace et isolée des différents aspects du projet, de la collecte des données à leur présentation.
 
 Voici un schéma de l'architecture du projet :
+```mermaid
 graph LR
     A[Pokepedia] -->|Scraping via Scrapy| B[JSON]
     B -->|Insertion via insert.py| C[PostgreSQL DB]
@@ -72,7 +73,7 @@ graph LR
     style C fill:#cff,stroke:#333,stroke-width:2px
     style D fill:#cfc,stroke:#333,stroke-width:2px
     style E fill:#ccf,stroke:#333,stroke-width:2px
-
+```
 
 ### Choix techniques 
 #### Utilisation du Fichier JSON
