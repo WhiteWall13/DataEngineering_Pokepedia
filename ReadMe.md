@@ -67,11 +67,11 @@ graph LR
     C -->|Alimentation| D[ElasticSearch]
     D -->|Visualisation| E[Flask App sur localhost:8080]
 
-    style A fill:#f99,stroke:#333,stroke-width:2px
-    style B fill:#f99,stroke:#333,stroke-width:2px
-    style C fill:#f99,stroke:#333,stroke-width:2px
-    style D fill:#f99,stroke:#333,stroke-width:2px
-    style E fill:#f99,stroke:#333,stroke-width:2px
+    style A fill:#f00000,stroke:#333,stroke-width:2px
+    style B fill:#f00000,stroke:#333,stroke-width:2px
+    style C fill:#f00000,stroke:#333,stroke-width:2px
+    style D fill:#f00000,stroke:#333,stroke-width:2px
+    style E fill:#f00000,stroke:#333,stroke-width:2px
 ```
 
 ### Choix techniques 
