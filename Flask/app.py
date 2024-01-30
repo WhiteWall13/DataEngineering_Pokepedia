@@ -114,56 +114,54 @@ def list_pokemons_sensibilities():
 
 @app.route("/top_resistants")
 def top_resistants():
+    # Récupérer les valeurs sélectionnées pour les menus déroulants ou définir la valeur par défaut si non fournies
+    top_n = request.args.get('top_n', default=10, type=int)
+    histogram_n = request.args.get('histogram_n', default=10, type=int)
 
-    top_n = request.args.get('top', default=10, type=int)
-
-    # Requête ElasticSearch pour récupérer les Pokémons avec leurs sensibilités et leurs types
+    # Requête à Elasticsearch pour récupérer les Pokémon avec leurs sensibilités, types et images
     search_body = {
         "query": {"match_all": {}},
         "size": 1000,
-        "_source": ["nom", "types", "sensibilities"]
+        "_source": ["nom", "types", "sensibilities", "image"]
     }
     search_result = es.search(index="pokemons", body=search_body)
-    pokemons = search_result['hits']['hits']
+    
+    # Traitement des résultats de la recherche pour calculer les scores de résistance et préparer les données de l'histogramme
+    resistance_scores = [
+        (
+            pokemon['_source']['nom'],  # Nom du Pokémon
+            ", ".join(pokemon['_source']['types']),  # Types du Pokémon
+            sum(pokemon['_source'].get('sensibilities', {}).values()),  # Calcul du score de sensibilités
+            pokemon['_source'].get('image', '')  # URL de l'image du Pokémon
+        )
+        for pokemon in search_result['hits']['hits'] 
+    ]
 
-
-    # Calcul du score de résistance pour chaque Pokémon et stockage des scores par type
-    resistance_scores = []
-    scores_by_type = {}
-    for pokemon in pokemons:
-        name = pokemon['_source']['nom']
-        types = ", ".join(pokemon['_source']['types'])
-        sensibilities = pokemon['_source'].get('sensibilities', {})
-        resistance_score = sum(sensibilities.values())  # La somme des sensibilités
-
-        # Ajouter le score à la liste des scores de résistance
-        resistance_scores.append((name, types, resistance_score))
-
-        # Stocker les scores par type pour analyse
-        type_key = tuple(pokemon['_source']['types'])  # Un tuple pour gérer les types multiples
-        if type_key not in scores_by_type:
-            scores_by_type[type_key] = []
-        scores_by_type[type_key].append(resistance_score)
-
-    # Trier les Pokémon par leur score de résistance croissant
+    # Tri des Pokémon par leur score de résistance dans l'ordre croissant
     top_resistant_pokemons = sorted(resistance_scores, key=lambda x: x[2])[:top_n]
 
-    # Génération du HTML pour la liste des Pokémon les plus résistants
-    top_resistants_html = "<h1>Top des Pokémon les moins sensibles</h1><ol>"
-    for name, types, score in top_resistant_pokemons:  # Afficher seulement le top 10
-        top_resistants_html += f"<li>{name} ({types}) - Score de résistance: {score:.2f}</li>"
-    top_resistants_html += "</ol>"
+    # Préparation des données pour l'histogramme
+    scores_by_type = {}  # Dictionnaire pour stocker les scores par type
+    for name, types, score, image_url in top_resistant_pokemons:
+        # Pour chaque Pokémon, ajouter le score de résistance dans le dictionnaire avec la clé étant les types
+        if types not in scores_by_type:
+            scores_by_type[types] = []
+        scores_by_type[types].append(score)
 
-    # Analyse des scores par type
+    # Préparation des données pour l'histogramme
     type_names = []
     avg_scores = []
+
     # Trier les types par le score moyen de résistance croissant
-    sorted_types = sorted(scores_by_type.items(), key=lambda x: mean(x[1]))[:top_n]
+    sorted_types = sorted(scores_by_type.items(), key=lambda x: mean(x[1]))[:histogram_n]
+
     for type_key, scores in sorted_types:
-        type_name = ", ".join(type_key)
+        # Pas besoin de joindre ici si type_key est déjà une chaîne
+        type_name = type_key  
         avg_score = mean(scores)
         type_names.append(type_name)
         avg_scores.append(avg_score)
+
 
     # Création de l'histogramme avec Plotly
     fig = px.bar(
@@ -173,27 +171,38 @@ def top_resistants():
         title="Score moyen de résistance par type",
     )
 
-    # Rendu de l'histogramme en HTML
+    # Conversion de l'histogramme en HTML pour l'intégrer dans la page web
     graph_html = pio.to_html(fig, full_html=False)
 
-    top_resistants_html = """
-    <form action="/top_resistants" method="get">
-        <label for="top">Sélectionnez le nombre de résultats à afficher:</label>
-        <select name="top" id="top" onchange="this.form.submit()">
-            <option value="5">Top 5</option>
-            <option value="10" selected>Top 10</option>
-            <option value="15">Top 15</option>
-            <option value="20">Top 20</option>
-            <option value="30">Top 30</option>
-            <option value="50">Top 50</option>
+    # Génération du HTML pour les menus déroulants, la liste des Pokémon les plus résistants et l'histogramme
+    return render_template_string("""
+    <h1>Top des Pokémon les moins sensibles</h1>
+    <form action="{{ url_for('top_resistants') }}" method="get">
+        <label for="top_n">Choisir le nombre de pokemons à affiché (trié par ordre croissant):</label>
+        <select name="top_n" id="top_n" onchange="this.form.submit()">
+            {% for i in [5, 10, 20, 30, 50] %}
+                <option value="{{ i }}" {{ 'selected' if i == top_n else '' }}>{{ i }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <ol>
+        {% for name, types, score, image_url in top_resistant_pokemons %}
+            <li>
+                <img src="{{ image_url }}" alt="Image de {{ name }}" style="width:100px; height:auto;">
+                {{ name }} ({{ types }}) - Score de résistance: {{ score }}
+            </li>
+        {% endfor %}
+        </ol>
+        <h2>Score moyen de résistance par type</h2>
+        <label for="histogram_n">Choisir le nombre de type affiché dans l'histogramme (trié par ordre croissant):</label>
+        <select name="histogram_n" id="histogram_n" onchange="this.form.submit()">
+            {% for i in [5, 10, 20, 30, 50] %}
+                <option value="{{ i }}" {{ 'selected' if i == histogram_n else '' }}>{{ i }}</option>
+            {% endfor %}
         </select>
     </form>
-    """ + top_resistants_html
-
-    # Intégrer l'histogramme dans le HTML de la page
-    top_resistants_html += f"<h1>Score moyen des sensibilités par type par ordre croissant</h1>{graph_html}"
-
-    return top_resistants_html
+    {{ graph_html|safe }}
+    """, top_n=top_n, histogram_n=histogram_n, top_resistant_pokemons=top_resistant_pokemons[:top_n], graph_html=graph_html)
 
 
 if __name__ == "__main__":

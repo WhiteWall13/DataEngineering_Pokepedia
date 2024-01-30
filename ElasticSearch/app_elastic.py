@@ -25,11 +25,11 @@ def transfer_data():
 
     # Requête pour récupérer les noms et les types de Pokémon
     query_types = '''
-    SELECT nom, array_agg(DISTINCT type_nom) as types
-    FROM pokemon
-    JOIN pokemon_type ON pokemon.numero = pokemon_type.numero
-    JOIN type ON pokemon_type.type_id = type.type_id
-    GROUP BY pokemon.nom;
+    SELECT p.nom, array_agg(DISTINCT t.type_nom) as types, p.image
+    FROM pokemon p
+    JOIN pokemon_type pt ON p.numero = pt.numero
+    JOIN type t ON pt.type_id = t.type_id
+    GROUP BY p.nom, p.image;
     '''
     cursor.execute(query_types)
     pokemons_types = cursor.fetchall()
@@ -57,7 +57,8 @@ def transfer_data():
             "_source": {
                 "nom": pokemon[0],
                 "types": pokemon[1],
-                "sensibilities": sensibilities_dict.get(pokemon[0], {})  
+                "sensibilities": sensibilities_dict.get(pokemon[0], {}),  
+                "image": pokemon[2],
             },
         }
         for pokemon in pokemons_types
