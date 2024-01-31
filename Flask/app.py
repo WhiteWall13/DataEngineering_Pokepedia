@@ -142,7 +142,7 @@ def top_resistants():
 
     # Préparation des données pour l'histogramme
     scores_by_type = {}  # Dictionnaire pour stocker les scores par type
-    for name, types, score, image_url in top_resistant_pokemons:
+    for name, types, score, image_url in resistance_scores:
         # Pour chaque Pokémon, ajouter le score de résistance dans le dictionnaire avec la clé étant les types
         if types not in scores_by_type:
             scores_by_type[types] = []
