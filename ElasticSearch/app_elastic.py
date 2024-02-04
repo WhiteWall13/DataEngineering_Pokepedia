@@ -36,7 +36,7 @@ def transfer_data():
 
     # Requête pour récupérer les sensibilités de Pokémon
     query_sensibilities = '''
-    SELECT p.nom, json_object_agg(t.type_nom, s.valeur) as sensibilite
+    SELECT p.nom, json_object_agg(t.type_nom, s.valeur) as sensibilites
     FROM pokemon p
     JOIN pokemon_sensibilite ps ON p.numero = ps.numero
     JOIN type t ON ps.type_id = t.type_id
