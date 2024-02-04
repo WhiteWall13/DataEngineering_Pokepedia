@@ -134,32 +134,83 @@ def home():
         """)
 
 
-
-
-
-
+# Page des données des pokemons 
 @app.route("/pokemons")
 def list_pokemons():
     # Requête ElasticSearch pour compter le nombre total de Pokémon
     count_result = es.count(index="pokemons", body={"query": {"match_all": {}}})
     total_pokemons = count_result['count']
 
-    # Requête ElasticSearch pour récupérer les Pokémons
+    # Requête à Elasticsearch pour récupérer les Pokémon avec leurs sensibilités, types et images
     search_body = {
         "query": {"match_all": {}},
-        "size": 1000
+        "size": 1000,
+        "_source": ["nom", "types", "sensibilities", "image"]
     }
     search_result = es.search(index="pokemons", body=search_body)
     pokemons = search_result['hits']['hits']
 
     # Génération du HTML pour la liste des Pokémon
-    pokemons_html = f"<h1>Liste des Pokémons ({total_pokemons})</h1><ul>"
+    pokemons_html = ""
     for pokemon in pokemons:
         name = pokemon['_source']['nom']
-        types = ', '.join(pokemon['_source']['types'])
-        pokemons_html += f"<li>{name} - Types: {types}</li>"
-    pokemons_html += "</ul>"
-    return pokemons_html
+        image = pokemon['_source'].get('image', '')
+        types = ', '.join(pokemon['_source'].get('types', []))
+        sensibilities = pokemon['_source'].get('sensibilities', {})
+        sensibilities_html = ', '.join([f"{key}: {value}" for key, value in sensibilities.items()])
+        pokemons_html += f"""
+                <div class="pokemon-card">
+                    <img src="{image}" alt="{name}" />
+                    <h3>{name}</h3>
+                    <p>Types: {types}</p>
+                    <p>Sensibilités: {sensibilities_html}</p>
+                </div>
+            """
+    return render_template_string(f"""
+        <html>
+        <head>
+            <style>
+                body, html {{
+                    height: 100%;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #353535;
+                    color: #ffffff;
+                    font-family: 'Arial', sans-serif;
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: space-around;
+                }}
+                .pokemon-card {{
+                    background-color: #284b63;
+                    border-radius: 30px;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
+                    margin: 10px;
+                    text-align: center;
+                }}
+                .pokemon-card img {{
+                    max-width: 150px;
+                    height: auto;
+                    margin-bottom: 10px;
+                }}
+                .pokemon-card h3 {{
+                    color: #fff;
+                    font-size: 24px;
+                }}
+                .pokemon-card p {{
+                    color: #fff;
+                }}
+            </style>
+        </head>
+        <body>
+            <h2>Voici la liste des pokémons contenus dans la base de données ({total_pokemons}) :</h2>
+            <div class="pokemon-container">
+                {pokemons_html}
+            </div>
+        </body>
+        </html>
+    """)
 
 @app.route('/statistiques')
 def statistiques():
@@ -198,7 +249,7 @@ def list_pokemons_sensibilities():
     search_body = {
         "query": {"match_all": {}},
         "size": 1000,
-        "_source": ["nom", "types", "sensibilities"]  # Utilisez "sensibilities" si c'est le nom dans Elasticsearch
+        "_source": ["nom", "types", "sensibilities"]
     }
     search_result = es.search(index="pokemons", body=search_body)
     pokemons = search_result['hits']['hits']
@@ -208,7 +259,7 @@ def list_pokemons_sensibilities():
     for pokemon in pokemons:
         name = pokemon['_source']['nom']
         types = ', '.join(pokemon['_source']['types'])
-        sensibilities = pokemon['_source'].get('sensibilities', {})  # Utilisez "sensibilities" si c'est le nom dans Elasticsearch
+        sensibilities = pokemon['_source'].get('sensibilities', {}) 
         sensibilities_html = ', '.join([f"{key}: {value}" for key, value in sensibilities.items()])
         pokemons_html += f"<li>{name} - Types: {types} - Sensibilités: {sensibilities_html}</li>"
     pokemons_html += "</ul>"
