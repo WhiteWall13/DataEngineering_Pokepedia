@@ -74,7 +74,7 @@ def home():
         <head>
             <style>
                 body, html {
-                    height: 100%;
+                    height: auto;
                     margin: 0;
                     padding: 0;
                     display: flex;
@@ -168,7 +168,7 @@ def list_pokemons():
         <head>
             <style>
                 body, html {{
-                    height: 100%;
+                    height: auto;
                     margin: 0;
                     padding: 0;
                     background-color: #353535;
@@ -242,9 +242,7 @@ def statistiques():
         font_color="#ffffff", 
         xaxis_title="Type de Pokémon", 
         yaxis_title="Nombre de Pokémon",
-        autosize=False,
-        width=1200,
-        height=700,
+        autosize=True,
     )
 
     # Rendu de l'histogramme en HTML
@@ -254,13 +252,9 @@ def statistiques():
             <head>
                 <style>
                     body, html {
-                        height: 100%;
+                        height: auto;
                         margin: 0;
                         padding: 0;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
                         background-color: #353535;
                         color: #ffffff;
                         font-family: 'Arial', sans-serif;
@@ -303,6 +297,7 @@ def top_resistants():
     # Tri des Pokémon par leur score de résistance dans l'ordre croissant
     top_resistant_pokemons = sorted(resistance_scores, key=lambda x: x[2])[:top_n]
 
+    
     pokemons_html = ""
     for rank, (name, types, score, image_url) in enumerate(top_resistant_pokemons, start=1):
         classement = f"{rank}{'er' if rank == 1 else 'ème'}"
@@ -354,9 +349,7 @@ def top_resistants():
         font_color="#ffffff", 
         xaxis_title="Valeur résistance moyenne ", 
         yaxis_title="Type des pokemon",
-        autosize=False,
-        width=1200,
-        height=700,
+        autosize=True,
     )
 
     # Conversion de l'histogramme en HTML pour l'intégrer dans la page web
@@ -368,24 +361,56 @@ def top_resistants():
         <head>
             <style>
                 body, html {
-                    height: 100%;
+                    height: auto;
                     margin: 0;
                     padding: 0;
                     background-color: #353535;
                     color: #ffffff;
                     font-family: 'Arial', sans-serif;
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: space-around;
+                    text-align: center;
                 }
                 h1, h2 {
-                    font-size: 2.5em; /* Augmente la taille de police pour les titres */
-                    text-align: center; /* Centre les titres */
+                    font-size: 2.5em;
+                    margin: 20px 0;
+                }
+                form {
+                    margin: 20px auto;
+                    display: block;
+                }
+                ol {
+                    padding: 0;
+                    list-style-type: none;
+                }
+                ol li {
+                    margin: 10px 0;
+                }
+                .pokemon-card {
+                    background-color: #284b63; /* Couleur bleue pour le fond */
+                    border-radius: 20px; /* Bordures arrondies */
+                    padding: 10px; /* Espacement intérieur */
+                    margin: 10px; /* Espacement extérieur */
+                    text-align: center; /* Texte centré */
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Ombre pour le relief */
+                    display: inline-block; /* Permet aux cartes de s'aligner horizontalement */
+                    width: 200px; /* Largeur fixe pour toutes les cartes */
+                }
+                .pokemon-card img {
+                    width: 100px; /* Largeur de l'image */
+                    height: auto; /* Hauteur automatique pour conserver les proportions */
+                }
+                .pokemon-card h3 {
+                    color: #fff; /* Texte blanc */
+                    font-size: 1.2em; /* Taille de police pour le nom */
+                }
+                .pokemon-card p {
+                    color: #fff; /* Texte blanc */
+                    font-size: 0.9em; /* Taille de police pour les détails */
                 }
             </style>
         </head>
         <body>
         <h1>Top des Pokémon les moins sensibles</h1>
+        <div>
         <form action="{{ url_for('top_resistants') }}" method="get">
             <label for="top_n">Choisir le nombre de pokemons à afficher (trié par ordre croissant):</label>
             <select name="top_n" id="top_n" onchange="this.form.submit()">
@@ -395,14 +420,19 @@ def top_resistants():
             </select>
             <br>
             <ol>
-            {% for name, types, score, image_url in top_resistant_pokemons %}
-                <li>
-                    <img src="{{ image_url }}" alt="Image de {{ name }}" style="width:100px; height:auto;">
-                    {{ name }} ({{ types }}) - Score de résistance: {{ score }}
-                </li>
-            {% endfor %}
+                <div>
+                    {% for name, types, score, image_url in top_resistant_pokemons %}
+                        <div class="pokemon-card">
+                            <img src="{{ image_url }}" alt="Image de {{ name }}">
+                            <h3>{{ name }}</h3>
+                            <p>Types: {{ types }}</p>
+                            <p>Score de résistance: {{ score }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
             </ol>
             <h2>Score moyen de résistance par type</h2>
+            <div>
             <label for="histogram_n">Choisir le nombre de types affichés dans l'histogramme (trié par ordre croissant):</label>
             <select name="histogram_n" id="histogram_n" onchange="this.form.submit()">
                 {% for i in [5, 10, 20, 30, 50] %}
@@ -410,6 +440,7 @@ def top_resistants():
                 {% endfor %}
             </select>
             </form>
+            </div>
             <div>{{ graph_html|safe }}</div>    
         </body>
         </html>
