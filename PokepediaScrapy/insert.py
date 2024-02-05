@@ -12,12 +12,12 @@ logging.basicConfig(
 
 def pichu_stats():
     return {
-        "PV": "20",
-        "Attaque": "40",
-        "Défense": "15",
-        "Attaque Spéciale": "35",
-        "Défense Spéciale": "35",
-        "Vitesse": "60",
+        "PV": 20,
+        "Attaque": 40,
+        "Défense": 15,
+        "Attaque Spéciale": 35,
+        "Défense Spéciale": 35,
+        "Vitesse": 60,
     }
 
 def pichu():

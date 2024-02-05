@@ -126,6 +126,9 @@ def home():
             <form action="/top_resistants">
                 <input type="submit" value="Voir les sensibilités des pokemons"" />
             </form>
+            <form action="/top_statistiques">
+                <input type="submit" value="Voir les statistiques des pokemons"" />
+            </form>
         </body>
         </html>
         """)
@@ -297,20 +300,6 @@ def top_resistants():
     # Tri des Pokémon par leur score de résistance dans l'ordre croissant
     top_resistant_pokemons = sorted(resistance_scores, key=lambda x: x[2])[:top_n]
 
-    
-    pokemons_html = ""
-    for rank, (name, types, score, image_url) in enumerate(top_resistant_pokemons, start=1):
-        classement = f"{rank}{'er' if rank == 1 else 'ème'}"
-        pokemons_html += f"""
-            <div class="pokemon-card">
-                <span class="pokemon-rank">{classement}</span>
-                <img src="{image_url}" alt="{name}" />
-                <h3>{name}</h3>
-                <p>Types: {types}</p>
-                <p>Score de résistance: {score}</p>
-            </div>
-        """
-
     # Préparation des données pour l'histogramme
     scores_by_type = {}  # Dictionnaire pour stocker les scores par type
     for name, types, score, image_url in resistance_scores:
@@ -385,26 +374,27 @@ def top_resistants():
                     margin: 10px 0;
                 }
                 .pokemon-card {
-                    background-color: #284b63; /* Couleur bleue pour le fond */
-                    border-radius: 20px; /* Bordures arrondies */
-                    padding: 10px; /* Espacement intérieur */
-                    margin: 10px; /* Espacement extérieur */
-                    text-align: center; /* Texte centré */
-                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Ombre pour le relief */
-                    display: inline-block; /* Permet aux cartes de s'aligner horizontalement */
-                    width: 200px; /* Largeur fixe pour toutes les cartes */
+                    background-color: #284b63; 
+                    border-radius: 20px; 
+                    padding: 10px; 
+                    margin: 10px; 
+                    text-align: center; 
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+                    display: inline-block; 
+                    width: 200px; 
                 }
                 .pokemon-card img {
-                    width: 100px; /* Largeur de l'image */
-                    height: auto; /* Hauteur automatique pour conserver les proportions */
+                    width: 100px; 
+                    height: auto; 
                 }
                 .pokemon-card h3 {
-                    color: #fff; /* Texte blanc */
-                    font-size: 1.2em; /* Taille de police pour le nom */
+                    font-size: 1.2em; 
                 }
                 .pokemon-card p {
-                    color: #fff; /* Texte blanc */
-                    font-size: 0.9em; /* Taille de police pour les détails */
+                    font-size: 0.9em;
+                }
+                .pokemon-rank {
+                    font-size: 2em; 
                 }
             </style>
         </head>
@@ -423,6 +413,7 @@ def top_resistants():
                 <div>
                     {% for name, types, score, image_url in top_resistant_pokemons %}
                         <div class="pokemon-card">
+                            <span class="pokemon-rank">#{{ loop.index }}</span>
                             <img src="{{ image_url }}" alt="Image de {{ name }}">
                             <h3>{{ name }}</h3>
                             <p>Types: {{ types }}</p>
@@ -445,6 +436,122 @@ def top_resistants():
         </body>
         </html>
         """, graph_html=graph_html, top_n=top_n, histogram_n=histogram_n, top_resistant_pokemons=top_resistant_pokemons[:top_n])
+
+@app.route("/top_statistiques")
+def top_statistiques():
+    # Récupérer les valeurs sélectionnées pour les menus déroulants ou définir la valeur par défaut si non fournies
+    selected_type = request.args.get('type', default='Feu', type=str)
+    selected_stat = request.args.get('stat', default='PV', type=str)
+
+    # Requête à Elasticsearch pour récupérer les Pokémon avec leurs statistiques et types
+    search_body = {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {"term": {"types.keyword": selected_type}}
+                        ]
+                    }
+                },
+                "size": 1000,
+                "_source": ["nom", "types", "image", "stats"]
+            }
+    search_result = es.search(index="pokemons", body=search_body)
+
+    
+    # Traitement des résultats de la recherche pour calculer les scores de résistance et préparer les données de l'histogramme
+    statistiques = [
+        (
+            pokemon['_source']['nom'],
+            ", ".join(pokemon['_source']['types']),
+            pokemon['_source'].get('image', ''),
+            pokemon['_source']['stats'][selected_stat]  
+        )
+        for pokemon in search_result['hits']['hits'] 
+        if selected_type in pokemon['_source']['types']
+    ]
+
+    # Tri par statistique, en ordre décroissant
+    top_statistiques = sorted(statistiques, key=lambda x: x[3], reverse=True)[:10] 
+
+
+    # Générer le HTML pour les menus déroulants
+    return render_template_string("""
+        <html>
+        <head>
+            <style>
+                body, html {
+                    height: auto;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #353535;
+                    color: #ffffff;
+                    font-family: 'Arial', sans-serif;
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: space-around;
+                }
+                .pokemon-card {
+                    background-color: #284b63; 
+                    border-radius: 20px; 
+                    padding: 10px; 
+                    margin: 10px; 
+                    text-align: center; 
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+                    display: inline-block; 
+                    width: 200px; 
+                }
+                .pokemon-card img {
+                    width: 100px; 
+                    height: auto; 
+                }
+                .pokemon-card h3 {
+                    font-size: 1.2em; 
+                }
+                .pokemon-card p {
+                    font-size: 0.9em;
+                }
+                .pokemon-rank {
+                    font-size: 2em; 
+                }
+                select {
+                    font-size: 20px;
+                    padding: 10px;
+                    margin-bottom: 20px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Top des Pokémon selon leurs statistiques</h1>
+                <form action="/top_statistiques" method="get">
+                    <label for="type">Choisir le type de Pokémon:</label>
+                    <select name="type" id="type" onchange="this.form.submit()">
+                        {% for i in ["Acier", "Feu", "Plante"] %}
+                            <option value="{{ i }}" {{ 'selected' if i == selected_type else '' }}>{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="stat">Choisir la statistique:</label>
+                    <select name="stats" id="stats" onchange="this.form.submit()">
+                        {% for i in ["Vitesse", "Attaque"] %}
+                            <option value="{{ i }}" {{ 'selected' if i == selected_stat else '' }}>{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="submit" value="Rechercher" />
+                </form>
+                <div>
+                        {% for name, types, image_url, stats in top_statistiques %}
+                            <div class="pokemon-card">
+                                <span class="pokemon-rank">#{{ loop.index }}</span>
+                                <img src="{{ image_url }}" alt="Image de {{ name }}">
+                                <h3>{{ name }}</h3>
+                                <p>Types: {{ types }}</p>
+                                <p>Statistique: {{ stats }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+        </body>
+        </html>
+    """, top_statistiques=top_statistiques)
+
 
 
 if __name__ == "__main__":

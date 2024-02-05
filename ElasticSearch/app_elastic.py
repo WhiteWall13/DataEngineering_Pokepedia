@@ -23,16 +23,17 @@ def transfer_data():
     conn = connect_postgres()
     cursor = conn.cursor()
 
-    # Requête pour récupérer les noms et les types de Pokémon
-    query_types = '''
-    SELECT p.nom, array_agg(DISTINCT t.type_nom) as types, p.image
+    # Requête pour récupérer les noms, les types et les statistiques de Pokémon
+    query = '''
+    SELECT p.nom, array_agg(DISTINCT t.type_nom) as types, p.image, s.pv, s.attaque, s.defense, s.attaque_speciale, s.defense_speciale, s.vitesse, s.special
     FROM pokemon p
     JOIN pokemon_type pt ON p.numero = pt.numero
     JOIN type t ON pt.type_id = t.type_id
-    GROUP BY p.nom, p.image;
+    JOIN statistiques s ON p.numero = s.numero
+    GROUP BY p.nom, p.image, s.pv, s.attaque, s.defense, s.attaque_speciale, s.defense_speciale, s.vitesse, s.special;
     '''
-    cursor.execute(query_types)
-    pokemons_types = cursor.fetchall()
+    cursor.execute(query)
+    pokemons_stats = cursor.fetchall()
 
     # Requête pour récupérer les sensibilités de Pokémon
     query_sensibilities = '''
@@ -49,7 +50,7 @@ def transfer_data():
     # Créer un dictionnaire pour les sensibilités pour un accès facile
     sensibilities_dict = {row[0]: row[1] for row in pokemons_sensibilities}
 
-    # Préparez les actions pour le transfert de données
+    # Préparer les actions pour le transfert de données
     actions = [
         {
             "_index": "pokemons",
@@ -57,14 +58,23 @@ def transfer_data():
             "_source": {
                 "nom": pokemon[0],
                 "types": pokemon[1],
-                "sensibilities": sensibilities_dict.get(pokemon[0], {}),  
                 "image": pokemon[2],
+                "stats": {
+                    "PV": pokemon[3],
+                    "Attaque": pokemon[4],
+                    "Défense": pokemon[5],
+                    "Attaque Spéciale": pokemon[6],
+                    "Défense Spéciale": pokemon[7],
+                    "Vitesse": pokemon[8],
+                    "Spécial": pokemon[9]
+                },
+                "sensibilities": sensibilities_dict.get(pokemon[0], {}),
             },
         }
-        for pokemon in pokemons_types
+        for pokemon in pokemons_stats
     ]
 
-    # Transfert en masse vers Elasticsearch
+    # Transfert vers Elasticsearch
     helpers.bulk(es, actions)
     cursor.close()
     conn.close()
