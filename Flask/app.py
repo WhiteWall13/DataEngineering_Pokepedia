@@ -121,10 +121,7 @@ def home():
                 <input type="submit" value="Voir les Pokémons" " />
             </form>
             <form action="/statistiques">
-                <input type="submit" value="Voici les statistiques des pokémons" " />
-            </form>
-            <form action="/pokemons_sensibilities">
-                <input type="submit" value="Voir les Pokémons et leurs sensibilités"" />
+                <input type="submit" value="Voici les statistiques des types des pokémons" " />
             </form>
             <form action="/top_resistants">
                 <input type="submit" value="Voir les sensibilités des pokemons"" />
@@ -134,7 +131,7 @@ def home():
         """)
 
 
-# Page des données des pokemons 
+# Page des données extraites des pokemons 
 @app.route("/pokemons")
 def list_pokemons():
     # Requête ElasticSearch pour compter le nombre total de Pokémon
@@ -237,33 +234,46 @@ def statistiques():
         labels={"x": "Type", "y": "Nombre"},
         title="Nombre de Pokémon par Type",
     )
+    fig.update_layout(
+        title_font_color="#ffffff",  
+        title_font_size=24,  
+        plot_bgcolor="#353535", 
+        paper_bgcolor="#353535",  
+        font_color="#ffffff", 
+        xaxis_title="Type de Pokémon", 
+        yaxis_title="Nombre de Pokémon",
+        autosize=False,
+        width=1200,
+        height=700,
+    )
 
     # Rendu de l'histogramme en HTML
     graph_html = pio.to_html(fig, full_html=False)
-    return f"<h1>Voici des statistiques liées aux Pokémon</h1>{graph_html}"
+    return render_template_string("""
+            <html>
+            <head>
+                <style>
+                    body, html {
+                        height: 100%;
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        background-color: #353535;
+                        color: #ffffff;
+                        font-family: 'Arial', sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Voici des statistiques liées aux types des Pokémon :</h1>
+                <div>{{ graph_html|safe }}</div>      
+            </body>
+            </html>
+            """, graph_html=graph_html)
 
-@app.route("/pokemons_sensibilities")
-def list_pokemons_sensibilities():
-
-    # Requête ElasticSearch pour récupérer les Pokémons avec leurs sensibilités
-    search_body = {
-        "query": {"match_all": {}},
-        "size": 1000,
-        "_source": ["nom", "types", "sensibilities"]
-    }
-    search_result = es.search(index="pokemons", body=search_body)
-    pokemons = search_result['hits']['hits']
-
-    # Génération du HTML pour la liste des Pokémon avec leurs sensibilités
-    pokemons_html = "<h1>Liste des Pokémons avec leurs sensibilités</h1><ul>"
-    for pokemon in pokemons:
-        name = pokemon['_source']['nom']
-        types = ', '.join(pokemon['_source']['types'])
-        sensibilities = pokemon['_source'].get('sensibilities', {}) 
-        sensibilities_html = ', '.join([f"{key}: {value}" for key, value in sensibilities.items()])
-        pokemons_html += f"<li>{name} - Types: {types} - Sensibilités: {sensibilities_html}</li>"
-    pokemons_html += "</ul>"
-    return pokemons_html
 
 @app.route("/top_resistants")
 def top_resistants():
@@ -292,6 +302,19 @@ def top_resistants():
 
     # Tri des Pokémon par leur score de résistance dans l'ordre croissant
     top_resistant_pokemons = sorted(resistance_scores, key=lambda x: x[2])[:top_n]
+
+    pokemons_html = ""
+    for rank, (name, types, score, image_url) in enumerate(top_resistant_pokemons, start=1):
+        classement = f"{rank}{'er' if rank == 1 else 'ème'}"
+        pokemons_html += f"""
+            <div class="pokemon-card">
+                <span class="pokemon-rank">{classement}</span>
+                <img src="{image_url}" alt="{name}" />
+                <h3>{name}</h3>
+                <p>Types: {types}</p>
+                <p>Score de résistance: {score}</p>
+            </div>
+        """
 
     # Préparation des données pour l'histogramme
     scores_by_type = {}  # Dictionnaire pour stocker les scores par type
@@ -323,39 +346,74 @@ def top_resistants():
         labels={"x": "Type", "y": "Score moyen de résistance"},
         title="Score moyen de résistance par type",
     )
+    fig.update_layout(
+        title_font_color="#ffffff",  
+        title_font_size=24,  
+        plot_bgcolor="#353535", 
+        paper_bgcolor="#353535",  
+        font_color="#ffffff", 
+        xaxis_title="Valeur résistance moyenne ", 
+        yaxis_title="Type des pokemon",
+        autosize=False,
+        width=1200,
+        height=700,
+    )
 
     # Conversion de l'histogramme en HTML pour l'intégrer dans la page web
     graph_html = pio.to_html(fig, full_html=False)
 
     # Génération du HTML pour les menus déroulants, la liste des Pokémon les plus résistants et l'histogramme
     return render_template_string("""
-    <h1>Top des Pokémon les moins sensibles</h1>
-    <form action="{{ url_for('top_resistants') }}" method="get">
-        <label for="top_n">Choisir le nombre de pokemons à affiché (trié par ordre croissant):</label>
-        <select name="top_n" id="top_n" onchange="this.form.submit()">
-            {% for i in [5, 10, 20, 30, 50] %}
-                <option value="{{ i }}" {{ 'selected' if i == top_n else '' }}>{{ i }}</option>
+        <html>
+        <head>
+            <style>
+                body, html {
+                    height: 100%;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #353535;
+                    color: #ffffff;
+                    font-family: 'Arial', sans-serif;
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: space-around;
+                }
+                h1, h2 {
+                    font-size: 2.5em; /* Augmente la taille de police pour les titres */
+                    text-align: center; /* Centre les titres */
+                }
+            </style>
+        </head>
+        <body>
+        <h1>Top des Pokémon les moins sensibles</h1>
+        <form action="{{ url_for('top_resistants') }}" method="get">
+            <label for="top_n">Choisir le nombre de pokemons à afficher (trié par ordre croissant):</label>
+            <select name="top_n" id="top_n" onchange="this.form.submit()">
+                {% for i in [5, 10, 20, 30, 50] %}
+                    <option value="{{ i }}" {{ 'selected' if i == top_n else '' }}>{{ i }}</option>
+                {% endfor %}
+            </select>
+            <br>
+            <ol>
+            {% for name, types, score, image_url in top_resistant_pokemons %}
+                <li>
+                    <img src="{{ image_url }}" alt="Image de {{ name }}" style="width:100px; height:auto;">
+                    {{ name }} ({{ types }}) - Score de résistance: {{ score }}
+                </li>
             {% endfor %}
-        </select>
-        <br>
-        <ol>
-        {% for name, types, score, image_url in top_resistant_pokemons %}
-            <li>
-                <img src="{{ image_url }}" alt="Image de {{ name }}" style="width:100px; height:auto;">
-                {{ name }} ({{ types }}) - Score de résistance: {{ score }}
-            </li>
-        {% endfor %}
-        </ol>
-        <h2>Score moyen de résistance par type</h2>
-        <label for="histogram_n">Choisir le nombre de type affiché dans l'histogramme (trié par ordre croissant):</label>
-        <select name="histogram_n" id="histogram_n" onchange="this.form.submit()">
-            {% for i in [5, 10, 20, 30, 50] %}
-                <option value="{{ i }}" {{ 'selected' if i == histogram_n else '' }}>{{ i }}</option>
-            {% endfor %}
-        </select>
-    </form>
-    {{ graph_html|safe }}
-    """, top_n=top_n, histogram_n=histogram_n, top_resistant_pokemons=top_resistant_pokemons[:top_n], graph_html=graph_html)
+            </ol>
+            <h2>Score moyen de résistance par type</h2>
+            <label for="histogram_n">Choisir le nombre de types affichés dans l'histogramme (trié par ordre croissant):</label>
+            <select name="histogram_n" id="histogram_n" onchange="this.form.submit()">
+                {% for i in [5, 10, 20, 30, 50] %}
+                    <option value="{{ i }}" {{ 'selected' if i == histogram_n else '' }}>{{ i }}</option>
+                {% endfor %}
+            </select>
+            </form>
+            <div>{{ graph_html|safe }}</div>    
+        </body>
+        </html>
+        """, graph_html=graph_html, top_n=top_n, histogram_n=histogram_n, top_resistant_pokemons=top_resistant_pokemons[:top_n])
 
 
 if __name__ == "__main__":
