@@ -19,18 +19,20 @@ class PokemonDetailSpider(scrapy.Spider):
     def parse(self, response):
         pokemon_item = response.meta["pokemon_item"]
 
+        # Extractions des url des images des pokemons
         image_url = response.xpath(
             "//span[@typeof='mw:File']/a[@class='mw-file-description']/img/@src"
         ).get()
         if image_url:
             pokemon_item["image"] = response.urljoin(image_url)
 
+        # Extractions des statistiques des pokemons
         stats = {}
         # Sélectionner les tableaux qui contiennent "Statistiques indicatives" dans l'en-tête
         tables = response.xpath(
             "//th[contains(text(), 'Statistiques indicatives')]/ancestor::table"
         )
-
+        # Recupère chaque valeur et sa statistique 
         for table in tables:
             for stat_row in table.xpath("./tbody/tr"):
                 stat_name = stat_row.xpath("td[1]/a/text()").get()
@@ -41,24 +43,18 @@ class PokemonDetailSpider(scrapy.Spider):
 
         pokemon_item["stats"] = stats
 
-        # Sensibilités
-
-        # Extraction des sensibilités
-        # ... (autres parties de votre code)
-
-        # Sensibilités
+        # Extractions des Sensibilités
         sensibilities = {}
 
-        # Sélectionnez le tableau des sensibilités
+        # Tableau des sensibilités
         sensibilities_table = response.xpath('//table[contains(@class, "sensibilite")]')
 
-        # Parcourez chaque type (colonne du tableau) et extrayez le type et la sensibilité correspondante
+        # Parcour chaque type et on extrait le type et la sensibilité correspondante
         for sensibility_cell in sensibilities_table.xpath('.//tr[@class="ligne-efficacités"]/td'):
             # Extraction du nom du type sans "(type)"
             type_name = sensibility_cell.xpath('.//a/@title').get().replace(" (type)", "")
 
-            # Extraction de la sensibilité (ex: "× ½", "× 2", etc.)
-            # Le texte de la sensibilité est dans une <div> directement après l'image du type
+            # Extraction de la sensibilité
             sensibility_value_raw = sensibility_cell.xpath('.//div/text()').get()
             
             # Gérer les cas où la div de sensibilité est vide (sensibilité standard de 1)
@@ -68,7 +64,7 @@ class PokemonDetailSpider(scrapy.Spider):
                 # Nettoyer la valeur brute
                 sensibility_value_raw = sensibility_value_raw.strip()  # Enlever les espaces blancs autour de la valeur
 
-                # Convertir la valeur de sensibilité textuelle en nombre flottant
+                # Convertir la valeur de sensibilité en nombre
                 sensibility_value = None
                 if sensibility_value_raw == '× ¼':
                     sensibility_value = 0.25
@@ -87,13 +83,15 @@ class PokemonDetailSpider(scrapy.Spider):
 
         pokemon_item["sensibilities"] = sensibilities
 
-        # Evolutions 
+        # Extractions des évolutions 
 
         evolutions = []
+        # On accède au tableau des évolutions
         evolution_table = response.xpath(
             '//table[.//th[contains(text(), "Famille d\'évolution")]]'
         )
 
+        # On récupère les évolutions issu du pokemon dans la table
         for evolution_row in evolution_table.xpath(".//tr"):
             evolution_name_link = evolution_row.xpath(
                 ".//td[last()]/a[@title][last()]/@title"
@@ -102,7 +100,5 @@ class PokemonDetailSpider(scrapy.Spider):
                 evolutions.append(evolution_name_link.strip())
 
         pokemon_item["evolutions"] = evolutions
-
-        # TODO : Bug évoli qui n'est pas dans les ses évolutions car case de gauche
 
         yield pokemon_item

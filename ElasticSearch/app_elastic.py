@@ -23,7 +23,7 @@ def transfer_data():
     conn = connect_postgres()
     cursor = conn.cursor()
 
-    # Requête pour récupérer les noms, les types et les statistiques de Pokémon
+    # Requête pour récupérer les noms, les types et les statistiques des Pokémons
     query = '''
     SELECT p.nom, array_agg(DISTINCT t.type_nom) as types, p.image, s.pv, s.attaque, s.defense, s.attaque_speciale, s.defense_speciale, s.vitesse, s.special
     FROM pokemon p
@@ -35,7 +35,7 @@ def transfer_data():
     cursor.execute(query)
     pokemons_stats = cursor.fetchall()
 
-    # Requête pour récupérer les sensibilités de Pokémon
+    # Requête pour récupérer les sensibilités des Pokémons
     query_sensibilities = '''
     SELECT p.nom, json_object_agg(t.type_nom, s.valeur) as sensibilites
     FROM pokemon p

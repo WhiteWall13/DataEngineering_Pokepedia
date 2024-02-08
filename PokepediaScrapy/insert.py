@@ -9,7 +9,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-
+# Fonction pour les statistiques de pichu
 def pichu_stats():
     return {
         "PV": 20,
@@ -20,6 +20,7 @@ def pichu_stats():
         "Vitesse": 60,
     }
 
+# Fonction pour les valeurs des sensibilités de pichu
 def pichu():
     return{
         "Normal": 1,
@@ -42,7 +43,7 @@ def pichu():
         "Fée": 1
     }
 
-
+# Vérifier le format du json contenant les données scrapé
 def validate_data(json_data):
     """Validates the JSON data to ensure it is in the expected format"""
     for entry in json_data:
@@ -65,23 +66,25 @@ def validate_data(json_data):
     return True
 
 
-
+# Insertion des données extraites dans le json 
 def insert_pokemon_data(json_data, db_params):
+    
+    # On ajoute les données seulement si le format est correct
     if not validate_data(json_data):
         logging.error("Invalid JSON data format")
         return
 
     try:
-        # Connect to the PostgreSQL database
+        # Connexion la base de données SQL PostgreSQL 
         conn = psycopg2.connect(**db_params)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
 
-        # Count the number of objects in the JSON file
+        # Compte le nombre d'objects dans le json
         total_objects = len(json_data)
         logging.info(f"Number of objects in JSON data: {total_objects}")
 
-        # SQL queries to insert data into tables
+        # Requetes SQL pour insérer les données dans la base de données
         insert_pokemon = sql.SQL(
             "INSERT INTO pokemon (numero, nom, image_mini, lien, image) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (numero) DO NOTHING;"
         )
@@ -94,16 +97,9 @@ def insert_pokemon_data(json_data, db_params):
         insert_stats = sql.SQL(
             "INSERT INTO statistiques (numero, pv, attaque, defense, attaque_speciale, defense_speciale, vitesse, special) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING;"
         )
-        insert_sensibilite = sql.SQL(
-            "INSERT INTO sensibilite (valeur) VALUES (%s) ON CONFLICT (valeur) DO NOTHING RETURNING sensibilite_id;"
-        )
-        insert_pokemon_sensibilite = sql.SQL(
-            "INSERT INTO pokemon_sensibilite (numero, type_id, sensibilite_id) "
-            "VALUES (%s, (SELECT type_id FROM type WHERE type_nom = %s), %s) ON CONFLICT DO NOTHING;"
-        )
 
 
-        # Iterate over each Pokemon and insert data into the database
+        # On insere les donnés dans la base de données
         for pokemon in json_data:
             cur.execute(
                 insert_pokemon,
@@ -115,15 +111,17 @@ def insert_pokemon_data(json_data, db_params):
                     pokemon["image"]
                 ),
             )
-
+            # Insertion des types de Pokémon et création des associations avec le Pokémon
             for type in pokemon["types"]:
                 cur.execute(insert_type, (type,))
                 cur.execute(insert_pokemon_type, (pokemon["numero"], type))
-
+            
+            # Gestion pour Pichu
             if pokemon["numero"] == 172:
                 pokemon["sensibilities"] = pichu()
                 pokemon["stats"] = pichu_stats()
-
+                
+            # Insertion des statistiques du Pokémon s'il n'en a pas
             if pokemon["stats"] == {}:
                 pokemon["stats"]["PV"] = 0
                 pokemon["stats"]["Attaque"] = 0
@@ -132,7 +130,7 @@ def insert_pokemon_data(json_data, db_params):
                 pokemon["stats"]["Défense Spéciale"] = 0
                 pokemon["stats"]["Vitesse"] = 0
                 print(f"Stats not found for pokemon: {pokemon['nom']}")
-
+            # Insertion des statistiques du Pokémon
             stats = pokemon["stats"]
             cur.execute(
                 insert_stats,
@@ -147,7 +145,7 @@ def insert_pokemon_data(json_data, db_params):
                     stats.get("Spécial"),
                 ),
             )
-
+            # Insertion des sensibilités du Pokémon si elles existent
             if 'sensibilities' in pokemon:
                 for type_name, value in pokemon['sensibilities'].items():
                     # Vérifie si le type existe déjà et obtient son id, sinon l'insère
@@ -175,11 +173,13 @@ def insert_pokemon_data(json_data, db_params):
                     )
 
             
-
+        # Enregistrement pour montrer que la abse de donnée est prête
         logging.info("Data insertion completed successfully.")
 
+    # Si une erreur arrive alors la signaler
     except Exception as e:
         logging.error(f"Error occurred: {e}")
+    # Fermeture de la connexion à la base de données
     finally:
         if conn:
             cur.close()
@@ -187,7 +187,7 @@ def insert_pokemon_data(json_data, db_params):
             logging.info("Database connection closed.")
 
 
-# Database parameters
+# Paramêtres de la base de données SQL
 db_params = {
     "dbname": "pokepedia_db",
     "user": "user",
@@ -196,12 +196,11 @@ db_params = {
     "port": "5432",
 }
 
-# JSON file path
+# Chemin du fichier json
 json_file_path = "/app/data/pokemons.json"
 
-# Load data from JSON file
+# Chargement des données du json
 with open(json_file_path, "r") as file:
     pokemons_data = json.load(file)
 
-# Uncomment below line to execute the insertion (after filling db_params)
 insert_pokemon_data(pokemons_data, db_params)

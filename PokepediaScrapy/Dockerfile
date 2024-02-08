@@ -1,24 +1,24 @@
 FROM python:3.10
 
-# Set working directory
+# Définit le dossier de travail
 WORKDIR /app
 
-# Copy requirements.txt files to directory
+# Copie le requirements.txt 
 COPY ./PokepediaScrapy/requirements.txt /app/
 COPY ./ElasticSearch/requirements.txt /app/ElasticSearch/
 
-# Install Python dependencies for scrapy and data migration to elasticsearch
+# Installaion des dépendances python pour scrapy et la migration des données à elasticsearch
 RUN pip install -r /app/requirements.txt
 RUN pip install -r /app/ElasticSearch/requirements.txt
 
-# Copy Scrapy project
+# Copier le projet Scrapy 
 COPY ./PokepediaScrapy /app/PokepediaScrapy
 COPY ./scrapy.cfg /app/
 
 COPY ./ElasticSearch/app_elastic.py /app/ElasticSearch
 
-# Change working directory
+# Définit le dossier de travail
 WORKDIR /app/PokepediaScrapy
 
-# Run Scrapy and insertion script
+# On run le Scrapy et l'insertion des données 
 CMD scrapy crawl pokemon && scrapy crawl pokemon_detail && python insert.py && python /app/ElasticSearch/app_elastic.py
