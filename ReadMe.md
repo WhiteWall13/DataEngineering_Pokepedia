@@ -94,3 +94,6 @@ La base de données PostgreSQL initialisée par le fichier `Postre_SQL/init.sql`
 - ![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white) [WhiteWall13](https://github.com/WhiteWall13)
 
 #### Bastien Guillou
+- ![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white) [bastien.guillou@edu.esiee.fr](mailto:bastien.guillou@edu.esiee.fr)
+- ![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white) [Bastien GUILLOU](https://www.linkedin.com/in/bastien-guillou-87021a2b3/)
+- ![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white) [basti2002](https://github.com/basti2002)
