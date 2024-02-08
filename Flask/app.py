@@ -649,7 +649,7 @@ def top_statistiques():
                                 <img src="{{ image_url }}" alt="Image de {{ name }}">
                                 <h3>{{ name }}</h3>
                                 <p>Types: {{ types }}</p>
-                                <p>Statistique: {{ stats }}</p>
+                                <p>{{ selected_stat }} : {{ stats }}</p>
                             </div>
                         {% endfor %}
                     </div>
