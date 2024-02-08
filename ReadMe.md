@@ -13,7 +13,7 @@ Ce projet intègre Docker Compose pour orchestrer une suite de conteneurs, facil
 
 ## Prérequis
 Pour exécuter ce projet, vous aurez besoin de :
-- Docker
+- Docker Desktop
 - Docker Compose
 
 Assurez-vous que ces outils sont installés et fonctionnels sur votre système.
@@ -25,16 +25,17 @@ Pour utiliser ce projet, suivez les étapes suivantes :
 1. **Construction des images Docker** :
    Placez-vous à la racine du projet et exécutez la commande suivante pour construire les images Docker nécessaires :
 ```docker-compose build```
+(Si vous venez à rencontrer des problèmes lors de la construction des images par le docker-compose, essayez de construire ces images avec une version de Docker Desktop plus ancienne soit <= 2.22)
 
-2. **Démarrage des conteneurs** :
+3. **Démarrage des conteneurs** :
 Une fois les images construites, démarrez les conteneurs avec cette commande : 
 ```docker-compose up -d```
 
-3. **Accès à la page web**
+4. **Accès à la page web**
 La page web est accessible à l'adresse suivante :
 [http://localhost:8080/](http://localhost:8080/) 
         
-4. **Arrêt des conteneurs et suppression des volumes** :
+5. **Arrêt des conteneurs et suppression des volumes** :
 Pour arrêter les conteneurs et supprimer les volumes associés, utilisez :
 ```docker-compose down -v```
 ## Utilisation de l'application Web 
